@@ -1,0 +1,54 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:0.8+'
+    }
+}
+
+apply plugin: 'android-library'
+apply plugin: 'maven'
+
+group = 'com.megadevs'
+version = '0.0.1'
+
+dependencies {
+    compile ('com.android.support:support-v4:19.0.0') {
+        exclude group: 'com.google.android'
+    }
+    compile ('com.google.guava:guava:16.0-rc1')
+    compile ('com.atlassian.util.concurrent:atlassian-util-concurrent:2.4.1')
+    compile ('de.greenrobot:eventbus:2.2.0') {
+        exclude group: 'com.google.android'
+    }
+    compile ('com.squareup.dagger:dagger:1.2.0')
+    compile ('com.squareup.dagger:dagger-compiler:1.2.0')
+    compile ('com.squareup.okhttp:okhttp:1.2.1')
+    compile ('com.squareup.okhttp:okhttp-apache:1.2.1')
+    compile ('com.google.code.gson:gson:2.2.4') {
+        exclude group: 'com.google.android'
+    }
+}
+
+android {
+    compileSdkVersion 18
+    buildToolsVersion '19.0.0'
+
+    defaultConfig {
+        minSdkVersion 8
+        targetSdkVersion 18
+
+        versionName '0.1'
+        versionCode 1
+    }
+}
+
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            repository url: 'file://' + new File(System.getProperty('user.home'), '.m2/repository').absolutePath
+        }
+    }
+}
+task install(dependsOn: uploadArchives)

@@ -1,0 +1,12 @@
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
+allprojects {
+    repositories {
+        mavenLocal()
+        mavenCentral()
+        maven { url 'https://maven.atlassian.com/content/repositories/atlassian-public' }
+    }
+
+    tasks.withType(Compile) {
+        options.encoding = "UTF-8"
+    }
+}
