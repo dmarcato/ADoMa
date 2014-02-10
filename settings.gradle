@@ -1,1 +1,1 @@
-include ':adoma', ':adoma-sample'
+include ':adoma', ':adoma-sample', ':DaoGenerator'

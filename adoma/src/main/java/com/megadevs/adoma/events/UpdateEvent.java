@@ -4,7 +4,7 @@ import com.megadevs.adoma.AdomaKey;
 
 public class UpdateEvent extends BaseAdomaKeyEvent {
 
-    public UpdateEvent(AdomaKey adomaKey) {
-        super(adomaKey);
+    public UpdateEvent(AdomaKey key) {
+        super(key);
     }
 }

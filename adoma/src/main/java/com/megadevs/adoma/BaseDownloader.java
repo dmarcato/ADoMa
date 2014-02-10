@@ -1,10 +1,9 @@
 package com.megadevs.adoma;
 
 import com.google.common.base.Strings;
+
 import com.squareup.okhttp.OkHttpClient;
 
-import javax.inject.Inject;
-import javax.inject.Named;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.InputStream;
@@ -12,6 +11,9 @@ import java.io.RandomAccessFile;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.concurrent.ExecutorService;
+
+import javax.inject.Inject;
+import javax.inject.Named;
 
 public class BaseDownloader implements Downloader {
 
@@ -22,15 +24,15 @@ public class BaseDownloader implements Downloader {
     protected transient OkHttpClient httpClient;
     @Inject @Named(AdomaModule.EXECUTOR_DOWNLOAD)
     protected transient ExecutorService executor;
-    protected AdomaMasterKey key;
+    protected AdomaKey key;
 
     public BaseDownloader() {
         Adoma.injectMembers(this);
     }
 
     @Override
-    public void setMasterKey(AdomaMasterKey adomaMasterKey) {
-        key = adomaMasterKey;
+    public void setKey(AdomaKey adomaKey) {
+        key = adomaKey;
         if (key.getData().getStatus() == DownloaderData.Status.IDLE) {
             processExistingFile();
             key.getData().setStatus(DownloaderData.Status.INITED);

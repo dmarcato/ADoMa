@@ -6,7 +6,7 @@ import java.net.URL;
 
 public interface Downloader extends Serializable, Runnable {
 
-    public void setMasterKey(AdomaMasterKey adomaMasterKey);
+    public void setKey(AdomaKey adomaKey);
     public AdomaKey getKey();
 
     public void resume();

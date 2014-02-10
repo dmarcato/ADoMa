@@ -1,57 +1,66 @@
 package com.megadevs.adoma;
 
-import android.content.Context;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-import com.google.gson.stream.JsonWriter;
+import com.megadevs.adoma.events.BaseAdomaKeyEvent;
 import com.megadevs.adoma.events.CancelEvent;
 import com.megadevs.adoma.events.CompleteEvent;
+
+import de.greenrobot.dao.Query;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.lang.reflect.Type;
-import java.util.concurrent.CopyOnWriteArraySet;
-import java.util.concurrent.ExecutorService;
 
 @Singleton
 public class AdomaKeyStore {
 
+    private final DaoSession daoSession;
+    private final AdomaKeyDao adomaKeyDao;
+    private final Query<AdomaKey> getAllKeysQuery;
+    private List<AdomaKey> lazyAdomaKeyList;
+    private boolean dirty = true;
+
     @Inject
-    Gson gson;
-    @Inject
-    Context context;
-    @Inject @Named(AdomaModule.EXECUTOR_DISK)
-    ExecutorService diskExecutor;
-
-    private final Object downloadsLock = new Object();
-    private CopyOnWriteArraySet<AdomaKey> keyStore; // keys are all instances of AdomaMasterKey
-    private Type typeOfKeyStoreMap = new TypeToken<CopyOnWriteArraySet<AdomaMasterKey>>() { }.getType();    // TypeToken must be the same as runtime
-
-    public AdomaKeyStore() {
-        Adoma.injectMembers(this);
-        loadKeyStore();
-
-        Adoma.registerToEventBus(this, CompleteEvent.class, CancelEvent.class);
+    public AdomaKeyStore(@Named("adoma") DaoSession daoSession) {
+        this.daoSession = daoSession;
+        adomaKeyDao = daoSession.getAdomaKeyDao();
+        getAllKeysQuery = adomaKeyDao.queryBuilder().orderDesc(AdomaKeyDao.Properties.LastUpdate).build();
+        Adoma.registerToInternalEventBus(this);
     }
 
-    public void onEvent(CompleteEvent event) {
-        remove(event.getAdomaKey());
+    public void onEvent(BaseAdomaKeyEvent event) {
+        if (event instanceof CompleteEvent || event instanceof CancelEvent) {
+            remove(event.getAdomaKey());
+        } else {
+            save(event.getAdomaKey());
+        }
     }
 
-    public void onEvent(CancelEvent event) {
-        remove(event.getAdomaKey());
+    private void updateKeysList() {
+        lazyAdomaKeyList = getAllKeysQuery.listLazy();
+        dirty = false;
+    }
+
+    public List<AdomaKey> getAllKeys() {
+        if (dirty) {
+            updateKeysList();
+        }
+        return lazyAdomaKeyList;
+    }
+
+    public boolean contains(String internalKey) {
+        return (get(internalKey) != null);
+    }
+
+    public AdomaKey get(String internalKey) {
+        return adomaKeyDao.load(internalKey);
     }
 
     public int getActiveDownloadCount() {
         int activeCount = 0;
-        for (AdomaKey key : keyStore) {
+        for (AdomaKey key : getAllKeys()) {
             if (key.getData().getStatus() == DownloaderData.Status.RUNNING) {
                 activeCount++;
             }
@@ -59,96 +68,37 @@ public class AdomaKeyStore {
         return activeCount;
     }
 
+    public List<AdomaKey> getActiveDownload() {
+        List<AdomaKey> keys = new ArrayList<AdomaKey>();
+        for (AdomaKey key : getAllKeys()) {
+            if (key.getData().getStatus() == DownloaderData.Status.RUNNING) {
+                keys.add(key);
+            }
+        }
+        return keys;
+    }
+
     public int getTotalDownloadCount() {
-        return keyStore.size();
+        return getAllKeys().size();
     }
 
     public boolean isEmpty() {
-        return keyStore.isEmpty();
+        return getAllKeys().isEmpty();
     }
 
-    public boolean contains(AdomaKey adomaKey) {
-        return keyStore.contains(adomaKey);
+    public void save(AdomaKey adomaKey) {
+        adomaKeyDao.insertOrReplace(adomaKey);
+        dirty = true;
     }
 
-    public AdomaMasterKey getMasterKey(AdomaKey adomaKey) {
-        for (AdomaKey key : keyStore) {
-            if (key.equals(adomaKey)) {
-                return (AdomaMasterKey) key;
-            }
-        }
-        return null;
+    public void remove(AdomaKey adomaKey) {
+        adomaKeyDao.delete(adomaKey);
+        dirty = true;
     }
 
-    public void add(AdomaMasterKey key) {
-        if (!keyStore.contains(key)) {
-            keyStore.add(key);
-            key.onCreate();
-            saveKeyStore();
-        }
-    }
-
-    public void remove(AdomaKey key) {
-        keyStore.remove(key);
-        saveKeyStore();
-    }
-
-    public void onDestroy() {
-        saveKeyStore();
-        diskExecutor.shutdown();
-        Adoma.unregisterFromEventBus(this);
-    }
-
-    private FileOutputStream openDataFile() throws FileNotFoundException {
-        return context.openFileOutput("adoma.dat", Context.MODE_PRIVATE);
-    }
-
-    private FileInputStream readDataFile() throws FileNotFoundException {
-        return context.openFileInput("adoma.dat");
-    }
-
-    private void saveKeyStore() {
-        diskExecutor.execute(new Runnable() {
-            @Override
-            public void run() {
-                synchronized (downloadsLock) {
-                    OutputStreamWriter writer = null;
-                    try {
-                        writer = new OutputStreamWriter(openDataFile(), "UTF-8");
-                        gson.toJson(keyStore, typeOfKeyStoreMap, new JsonWriter(writer));
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    } finally {
-                        if (writer != null) {
-                            try {
-                                writer.close();
-                            } catch (IOException e) {}
-                        }
-                    }
-                }
-            }
-        });
-    }
-
-    private void loadKeyStore() {
-        synchronized (downloadsLock) {
-            InputStreamReader reader = null;
-            try {
-                reader = new InputStreamReader(readDataFile(), "UTF-8");
-                keyStore = gson.fromJson(reader, typeOfKeyStoreMap);
-            } catch (Exception e) {
-                e.printStackTrace();
-            } finally {
-                if (reader != null) {
-                    try {
-                        reader.close();
-                    } catch (IOException e) {}
-                }
-            }
-            if (keyStore == null) {
-                keyStore = new CopyOnWriteArraySet<AdomaKey>();
-            }
-        }
+    public void remove(String internalKey) {
+        adomaKeyDao.deleteByKey(internalKey);
+        dirty = true;
     }
 
 }

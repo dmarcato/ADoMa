@@ -4,16 +4,18 @@ import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import dagger.ObjectGraph;
+
 import de.greenrobot.event.EventBus;
 
 import java.lang.ref.WeakReference;
 import java.util.List;
 
+import dagger.ObjectGraph;
+
 public class Adoma {
 
     static Adoma instance;
-    static EventBus localEventBus;
+    static EventBus externalEventBus;
     static EventBus adomaInternalEventBus = new EventBus();
 
     private static void checkInstance(Context context) {
@@ -37,19 +39,23 @@ public class Adoma {
         AdomaService.start(context.getApplicationContext());
     }
 
-    public static void setLocalEventBus(EventBus eventBus) {
-        localEventBus = eventBus;
+    /**
+     * To use with dagger
+     * @param context
+     * @return
+     */
+    public static ObjectGraph getObjectGraph(Context context) {
+        checkInstance(context);
+        return instance.objectGraph;
     }
 
-    public static void reconnectKeys(List<AdomaKey> adomaKeys) {
-        for (AdomaKey adomaKey : adomaKeys) {
-            AdomaKeyBuilder.bindMasterAndSlave(adomaKey);
-        }
+    public static void setEventBus(EventBus eventBus) {
+        externalEventBus = eventBus;
     }
 
-    static void postToLocalEventBus(Object event) {
-        if (localEventBus != null) {
-            localEventBus.post(event);
+    static void postToExternalEventBus(Object event) {
+        if (externalEventBus != null) {
+            externalEventBus.post(event);
         }
     }
 
@@ -57,11 +63,11 @@ public class Adoma {
         adomaInternalEventBus.post(event);
     }
 
-    static void registerToEventBus(Object subscriber, Class<?> eventType, Class<?>... moreEventType) {
-        adomaInternalEventBus.register(subscriber, eventType, moreEventType);
+    static void registerToInternalEventBus(Object subscriber) {
+        adomaInternalEventBus.register(subscriber);
     }
 
-    static void unregisterFromEventBus(Object subscriber) {
+    static void unregisterFromInternalEventBus(Object subscriber) {
         adomaInternalEventBus.unregister(subscriber);
     }
 

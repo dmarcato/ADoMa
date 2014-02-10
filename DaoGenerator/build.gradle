@@ -1,0 +1,22 @@
+apply plugin: 'java'
+apply plugin:'application'
+
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+}
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+dependencies {
+    compile fileTree(dir: 'libs', include: '*.jar')
+    compile 'org.apache.commons:commons-lang3:3.1'
+    compile 'org.freemarker:freemarker:2.3.17'
+}
+
+mainClassName = "com.megadevs.adoma.dao.AdomaDaoGenerator"
+//to generate classes: `gradle run`

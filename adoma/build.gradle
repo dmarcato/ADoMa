@@ -11,7 +11,7 @@ apply plugin: 'android-library'
 apply plugin: 'maven'
 
 group = 'com.megadevs'
-version = '0.0.1'
+version = '0.0.2'
 
 dependencies {
     compile ('com.android.support:support-v4:19.0.0') {
@@ -29,6 +29,8 @@ dependencies {
     compile ('com.google.code.gson:gson:2.2.4') {
         exclude group: 'com.google.android'
     }
+
+    compile (fileTree(dir: 'libs', include: '*.jar'))
 }
 
 android {
@@ -39,10 +41,19 @@ android {
         minSdkVersion 8
         targetSdkVersion 18
 
-        versionName '0.1'
-        versionCode 1
+        versionName '0.0.2'
+        versionCode 2
+    }
+
+    sourceSets {
+        main {
+            java {
+                srcDirs += [ 'src/main/java-generated' ]
+            }
+        }
     }
 }
+
 
 uploadArchives {
     repositories {

@@ -1,16 +1,17 @@
 package com.megadevs.adoma;
 
 import android.content.Context;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+
 import com.squareup.okhttp.OkHttpClient;
-import dagger.Module;
-import dagger.Provides;
+
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import javax.inject.Named;
 import javax.inject.Singleton;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+
+import dagger.Module;
+import dagger.Provides;
 
 @Module(injects = {
         AdomaKeyStore.class,
@@ -34,12 +35,19 @@ public class AdomaModule {
         return appContext;
     }
 
+    @Provides @Singleton @Named("adoma")
+    DbHelper provideDbHelper(Context context) {
+        return new DbHelper(context);
+    }
+
+    @Provides @Singleton @Named("adoma")
+    DaoSession provideDaoSession(@Named("adoma") DbHelper dbHelper) {
+        return dbHelper.getDaoSession();
+    }
+
     @Provides @Singleton
-    Gson provideGson() {
-        return new GsonBuilder()
-                .registerTypeAdapter(AdomaKey.class, new AdomaKey.AdomaKeyTypeAdapter())
-                .registerTypeAdapter(AdomaMasterKey.class, new AdomaMasterKey.AdomaMasterKeyTypeAdapter())
-                .create();
+    AdomaKeyStore provideAdomaKeystore(@Named("adoma") DaoSession daoSession) {
+        return new AdomaKeyStore(daoSession);
     }
 
     @Provides @Singleton
@@ -47,10 +55,10 @@ public class AdomaModule {
         return new OkHttpClient();
     }
 
-    @Provides @Singleton @Named(EXECUTOR_DISK)
-    ExecutorService provideDiskExecutor() {
-        return Executors.newSingleThreadExecutor();
-    }
+//    @Provides @Singleton @Named(EXECUTOR_DISK)
+//    ExecutorService provideDiskExecutor() {
+//        return Executors.newSingleThreadExecutor();
+//    }
 
     @Provides @Singleton @Named(EXECUTOR_DOWNLOAD)
     ExecutorService provideDownloadExecutor() {

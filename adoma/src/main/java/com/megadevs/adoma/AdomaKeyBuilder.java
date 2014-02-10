@@ -5,41 +5,27 @@ import java.net.URL;
 
 public class AdomaKeyBuilder {
 
+    public static AdomaKey find(String internalKey) {
+        return Adoma.inject(AdomaKeyStore.class).get(internalKey);
+    }
+
     public static AdomaKeyBuilder build() {
         return new AdomaKeyBuilder();
-    }
-
-    static AdomaKey getSlaveKey(AdomaKey adomaKey) {
-        AdomaKey slaveKey = new AdomaKey(adomaKey.internalKey);
-        slaveKey.merge(adomaKey);
-        bindMasterAndSlave(adomaKey);
-        return adomaKey;
-    }
-
-    static void bindMasterAndSlave(AdomaKey adomaKey) {
-        AdomaKeyStore adomaKeyStore = Adoma.inject(AdomaKeyStore.class);
-        AdomaMasterKey masterKey;
-        if (adomaKeyStore.contains(adomaKey)) {
-            masterKey = adomaKeyStore.getMasterKey(adomaKey);
-            masterKey.bindKey(adomaKey);
-        } else {
-            masterKey = new AdomaMasterKey(adomaKey);
-            adomaKeyStore.add(masterKey);
-        }
     }
 
     private AdomaKey adomaKey;
 
     private AdomaKeyBuilder() {
-        Adoma.injectMembers(this);
         adomaKey = new AdomaKey();
+        adomaKey.init();
         adomaKey.getData().setDownloaderClass(BaseDownloader.class);
         adomaKey.getData().setDestinationFolder(AdomaConfiguration.get().getDestinationFolder());
     }
 
     public AdomaKeyBuilder withCustomKey(String key) {
-        AdomaKey newKey = new AdomaKey(key);
-        newKey.data = adomaKey.data;
+        AdomaKey newKey = new AdomaKey();
+        newKey.init(key);
+        newKey.setData(adomaKey.getData());
         adomaKey = newKey;
         return this;
     }
@@ -68,7 +54,7 @@ public class AdomaKeyBuilder {
             throw new RuntimeException("Adoma must be initialized by calling Adoma.ensureDownloads(context);");
         }
         Adoma.instance.checkPermissions();
-        bindMasterAndSlave(adomaKey);
+        adomaKey.onCreate();
         return adomaKey;
     }
 
