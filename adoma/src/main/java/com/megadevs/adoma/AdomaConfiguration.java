@@ -27,7 +27,8 @@ public class AdomaConfiguration {
         if (Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState())) {
             destinationFolder = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
         } else {
-            throw new IllegalStateException("External storage not available");
+            Environment.getDownloadCacheDirectory();
+            //TODO handle this better :/
         }
     }
 
