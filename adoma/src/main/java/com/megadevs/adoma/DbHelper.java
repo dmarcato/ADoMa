@@ -11,9 +11,13 @@ public class DbHelper {
     private DaoSession daoSession;
     private DaoMaster daoMaster;
 
+    public static String getDatabaseName() {
+        return "adoma.db";
+    }
+
     @Inject
     public DbHelper(Context context) {
-        DaoMaster.DevOpenHelper devOpenHelper = new DaoMaster.DevOpenHelper(context, "adoma", null);
+        DaoMaster.DevOpenHelper devOpenHelper = new DaoMaster.DevOpenHelper(context, getDatabaseName(), null);
         final SQLiteDatabase db = devOpenHelper.getWritableDatabase();
         daoMaster = new DaoMaster(db);
         daoSession = daoMaster.newSession();

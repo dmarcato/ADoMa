@@ -49,6 +49,14 @@ public class Adoma {
         return instance.objectGraph;
     }
 
+    /**
+     * Return the local database name used to store data, useful for backup purpose
+     * @return
+     */
+    public static String getDatabaseName() {
+        return DbHelper.getDatabaseName();
+    }
+
     public static void setEventBus(EventBus eventBus) {
         externalEventBus = eventBus;
     }
