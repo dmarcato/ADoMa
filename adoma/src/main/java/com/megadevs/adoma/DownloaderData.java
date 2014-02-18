@@ -31,7 +31,6 @@ public class DownloaderData implements Serializable {
     protected CircularHashMap<Long, Long> ETAs = new CircularHashMap<Long, Long>(MAX_ETAS);
     protected CircularHashMap<Long, Long> speeds = new CircularHashMap<Long, Long>(MAX_SPEEDS);
 
-    private transient final Object CONSIDER_LOCK = new Object();
     private transient long lastConsideredEventTime = 0L;
 
     public DownloaderData() {
@@ -51,7 +50,7 @@ public class DownloaderData implements Serializable {
                 totalSize = other.totalSize;
                 currentSpeed = other.currentSpeed;
                 //TODO speed
-            } catch (Exception e) {}
+            } catch (Exception ignored) {}
         }
     }
 
@@ -62,11 +61,12 @@ public class DownloaderData implements Serializable {
     }
 
     private void considerNotifyDataUpdated() {
-        synchronized (CONSIDER_LOCK) {
+        synchronized (this) {
             long min = AdomaConfiguration.get().getMinDelayForProgressNotification();
             long now = System.currentTimeMillis();
             if (now - lastConsideredEventTime >= min) {
                 lastConsideredEventTime = now;
+                calculateSpeedAndETA(now);
                 notifyDataUpdated();
             }
         }

@@ -136,6 +136,7 @@ public class BaseDownloader implements Downloader {
         RandomAccessFile file = null;
         InputStream stream = null;
         HttpURLConnection connection = null;
+        int responseCode = 0;
 
         try {
             // Open connection to URL.
@@ -148,7 +149,8 @@ public class BaseDownloader implements Downloader {
             //			connection.connect();
 
             // Make sure response code is in the 200 range.
-            if (connection.getResponseCode() / 100 != 2) {
+            responseCode = connection.getResponseCode();
+            if (responseCode / 100 != 2) {
                 throwError("Response code not valid: " + connection.getResponseCode());
             }
 
@@ -214,6 +216,12 @@ public class BaseDownloader implements Downloader {
             if (connection != null) {
                 connection.disconnect();
             }
+        }
+
+        if (responseCode == 416) {
+            // range not valid
+            key.getData().setDownloadedSize(0);
+            resume();
         }
     }
 

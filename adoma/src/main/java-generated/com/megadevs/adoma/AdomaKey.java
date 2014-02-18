@@ -41,18 +41,17 @@ public class AdomaKey extends AdomaKeyBase  implements java.lang.Comparable<Adom
     public void init() {
         long rand = new Random(System.nanoTime()).nextLong();
         internalKey = new String(String.valueOf(rand)).intern(); // if not wrapped into new string, String.valueOf() may set an internal offset of 2 (that voids every equals() check :/)
-        __init();
     }
 
     public void init(String key) {
         internalKey = key.intern();
-        __init();
     }
 
-    private void __init() {
-        getData().setOnDataUpdateListener(this);
-        initDownloader();
-        inited = true;
+    void checkInited() {
+        if (!inited) {
+            inited = true;
+            initDownloader();
+        }
     }
 
     void merge(AdomaKey other) {
@@ -74,7 +73,7 @@ public class AdomaKey extends AdomaKeyBase  implements java.lang.Comparable<Adom
         return downloader;
     }
 
-    private void initDownloader() {
+    void initDownloader() {
         if (getData().getStatus() == DownloaderData.Status.RUNNING) {
             getData().setStatus(DownloaderData.Status.INITED);
             getDownloader().resume();
@@ -105,6 +104,7 @@ public class AdomaKey extends AdomaKeyBase  implements java.lang.Comparable<Adom
     }
 
     public void onCreate() {
+        inited = true;
         postIfInited(new CreateEvent(this));
     }
 
@@ -130,7 +130,14 @@ public class AdomaKey extends AdomaKeyBase  implements java.lang.Comparable<Adom
             data = new DownloaderData();
             setData(data);
         }
+        data.setOnDataUpdateListener(this);
         return data;
+    }
+
+    @Override
+    public void setData(DownloaderData data) {
+        super.setData(data);
+        data.setOnDataUpdateListener(this);
     }
 
     @Override

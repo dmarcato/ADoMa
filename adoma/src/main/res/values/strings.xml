@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">ADoMa</string>
+
+    <string name="notification_n_downloads">%1$d downloads running…</string>
+    <string name="notification_mono_text">%1$s/%2$s @ %3$s/s</string>
+    <string name="notification_mono_info">ETA: %1$s</string>
+    <string name="notification_multi_more">+%1$d more…</string>
 </resources>

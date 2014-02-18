@@ -152,7 +152,15 @@ public class Adoma {
         int hours = x % 24;
         x /= 24;
         int days = x;
-        return String.format("%dd, %dh, %dm, %ds", days, hours, minutes, seconds);
+        if (days > 0) {
+            return String.format("%dd, %dh, %dm, %ds", days, hours, minutes, seconds);
+        } else if (hours > 0) {
+            return String.format("%dh, %dm, %ds", hours, minutes, seconds);
+        } else if (minutes > 0) {
+            return String.format("%dm, %ds", minutes, seconds);
+        } else {
+            return String.format("%ds", seconds);
+        }
         /*Resources res = getResources();
         if (days > 0) {
             return res.getQuantityString(R.plurals.downloadmanager_days, days, days);

@@ -19,14 +19,14 @@ public class AdomaKeyStore {
     private final DaoSession daoSession;
     private final AdomaKeyDao adomaKeyDao;
     private final Query<AdomaKey> getAllKeysQuery;
-    private List<AdomaKey> lazyAdomaKeyList;
+    private List<AdomaKey> adomaKeyList;
     private boolean dirty = true;
 
     @Inject
     public AdomaKeyStore(@Named("adoma") DaoSession daoSession) {
         this.daoSession = daoSession;
         adomaKeyDao = daoSession.getAdomaKeyDao();
-        getAllKeysQuery = adomaKeyDao.queryBuilder().orderDesc(AdomaKeyDao.Properties.LastUpdate).build();
+        getAllKeysQuery = adomaKeyDao.queryBuilder().orderDesc(AdomaKeyDao.Properties.InternalKey).build();
         Adoma.registerToInternalEventBus(this);
     }
 
@@ -39,7 +39,10 @@ public class AdomaKeyStore {
     }
 
     private void updateKeysList() {
-        lazyAdomaKeyList = getAllKeysQuery.listLazy();
+        adomaKeyList = getAllKeysQuery.list();
+        for (AdomaKey adomaKey : adomaKeyList) {
+            adomaKey.checkInited();
+        }
         dirty = false;
     }
 
@@ -47,7 +50,7 @@ public class AdomaKeyStore {
         if (dirty) {
             updateKeysList();
         }
-        return lazyAdomaKeyList;
+        return adomaKeyList;
     }
 
     public boolean contains(String internalKey) {

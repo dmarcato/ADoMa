@@ -1,5 +1,6 @@
 package com.megadevs.adoma;
 
+import android.app.PendingIntent;
 import android.os.Environment;
 
 import java.io.File;
@@ -17,7 +18,8 @@ public class AdomaConfiguration {
 
     private File destinationFolder;
     private long minDelayForProgressNotification = 1000L;       // 1 second
-    private int smallIconId = R.drawable.icon;
+    private int notificationSmallIconId = R.drawable.icon;
+    private PendingIntent notificationContentIntent;
 
     public AdomaConfiguration() {
         setDefaultDestinationFolder();
@@ -48,11 +50,19 @@ public class AdomaConfiguration {
         this.minDelayForProgressNotification = minDelayForProgressNotification;
     }
 
-    public int getSmallIconId() {
-        return smallIconId;
+    public int getNotificationSmallIconId() {
+        return notificationSmallIconId;
     }
 
-    public void setSmallIconId(int smallIconId) {
-        this.smallIconId = smallIconId;
+    public void setNotificationSmallIconId(int notificationSmallIconId) {
+        this.notificationSmallIconId = notificationSmallIconId;
+    }
+
+    public PendingIntent getNotificationContentIntent() {
+        return notificationContentIntent;
+    }
+
+    public void setNotificationContentIntent(PendingIntent notificationContentIntent) {
+        this.notificationContentIntent = notificationContentIntent;
     }
 }

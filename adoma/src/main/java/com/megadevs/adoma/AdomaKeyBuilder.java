@@ -6,16 +6,25 @@ import java.net.URL;
 public class AdomaKeyBuilder {
 
     public static AdomaKey find(String internalKey) {
+        if (internalKey == null) {
+            return null;
+        }
         return Adoma.inject(AdomaKeyStore.class).get(internalKey);
     }
 
     public static AdomaKeyBuilder build() {
-        return new AdomaKeyBuilder();
+        return new AdomaKeyBuilder(false);
+    }
+
+    public static AdomaKeyBuilder buildOrFind() {
+        return new AdomaKeyBuilder(true);
     }
 
     private AdomaKey adomaKey;
+    private boolean tryToFindFirst;
 
-    private AdomaKeyBuilder() {
+    private AdomaKeyBuilder(boolean tryToFindFirst) {
+        this.tryToFindFirst = tryToFindFirst;
         adomaKey = new AdomaKey();
         adomaKey.init();
         adomaKey.getData().setDownloaderClass(BaseDownloader.class);
@@ -49,13 +58,21 @@ public class AdomaKeyBuilder {
         if (url == null) {
             throw new IllegalStateException("URL must be specified");
         }
-        adomaKey.getData().setUrl(url);
-        if (Adoma.instance == null) {
-            throw new RuntimeException("Adoma must be initialized by calling Adoma.ensureDownloads(context);");
+        AdomaKey existingKey = find(adomaKey.getInternalKey());
+        if (existingKey != null && tryToFindFirst) {
+            existingKey.getData().setUrl(url);
+            return existingKey;
+        } else if (existingKey == null) {
+            adomaKey.getData().setUrl(url);
+            if (Adoma.instance == null) {
+                throw new RuntimeException("Adoma must be initialized by calling Adoma.ensureDownloads(context);");
+            }
+            Adoma.instance.checkPermissions();
+            adomaKey.onCreate();
+            return adomaKey;
+        } else {
+            throw new IllegalStateException("Duplicate detected! Try to use buildOrFind() instead");
         }
-        Adoma.instance.checkPermissions();
-        adomaKey.onCreate();
-        return adomaKey;
     }
 
 }
